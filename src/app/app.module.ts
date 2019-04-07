@@ -1,6 +1,6 @@
 import { BrowserModule } from '@angular/platform-browser';
 import { NgModule } from '@angular/core';
-import { ReactiveFormsModule } from '@angular/forms';
+import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import {BrowserAnimationsModule} from '@angular/platform-browser/animations';
 import {
   MatInputModule,
@@ -9,15 +9,22 @@ import {
   MatToolbarModule,
   MatExpansionModule,
   MatProgressSpinnerModule,
-  MatPaginatorModule
+  MatPaginatorModule,
+  MatDialogModule
 } from '@angular/material';
 import { AppComponent } from './app.component';
 import { PostListComponent } from './posts/post-list/post-list.component';
 import { PostCreateComponent } from './posts/post-create/post-create.component';
 import { HeaderComponent } from './header/header.component';
-import { HttpClientModule } from '@angular/common/http';
+import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
 import { RouterModule } from '@angular/router';
 import { appRoutes } from './routes';
+import { LoginComponent } from './auth/login/login.component';
+import { SignupComponent } from './auth/signup/signup.component';
+import { AuthInterceptor } from './auth/auth-interceptor';
+import { AuthGuard } from './auth/auth.guard';
+import { ErrorInterceptor } from './error-interceptor';
+import { ErrorComponent } from './error/error.component';
 
 
 @NgModule({
@@ -25,12 +32,16 @@ import { appRoutes } from './routes';
       AppComponent,
       PostListComponent,
       PostCreateComponent,
-      HeaderComponent
+      HeaderComponent,
+      LoginComponent,
+      SignupComponent,
+      ErrorComponent
    ],
    imports: [
       BrowserModule,
       RouterModule.forRoot(appRoutes),
       ReactiveFormsModule,
+      FormsModule,
       BrowserAnimationsModule,
       MatInputModule,
       MatCardModule,
@@ -39,12 +50,19 @@ import { appRoutes } from './routes';
       MatExpansionModule,
       MatProgressSpinnerModule,
       MatPaginatorModule,
+      MatDialogModule,
       HttpClientModule,
       
    ],
-   providers: [],
+   providers: [
+      { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true },
+      { provide: HTTP_INTERCEPTORS, useClass: ErrorInterceptor, multi: true },
+      AuthGuard
+   ],
    bootstrap: [
       AppComponent
-   ]
+   ],
+   entryComponents: [ErrorComponent]
+
 })
 export class AppModule { }

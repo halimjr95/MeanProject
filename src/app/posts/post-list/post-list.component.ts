@@ -3,6 +3,7 @@ import { Post } from '../post.model';
 import { PostsService } from '../posts.service';
 import { Subscription } from 'rxjs';
 import { PageEvent } from '@angular/material';
+import { AuthService } from 'src/app/auth/auth.service';
 
 @Component({
   selector: 'app-post-list',
@@ -11,25 +12,37 @@ import { PageEvent } from '@angular/material';
 })
 export class PostListComponent implements OnInit, OnDestroy {
   isLoading = false;
+  userIsAuthenticated = false;
   posts: Post[] = [];
   totalPosts = 10;
   postsPerPage = 2;
   currentPage = 1;
+  userId: string;
   pageSizeOptions = [1, 2, 5, 10];
+  private authListenerSubs: Subscription;
   private postsSub: Subscription;
 
 
-  constructor(public postsService: PostsService) { }
+  constructor(public postsService: PostsService, private authService: AuthService) { }
 
   ngOnInit() {
     this.isLoading = true;
     this.postsService.getPosts(this.postsPerPage, this.currentPage);
+    this.userId = this.authService.getUserId();
     this.postsSub = this.postsService.getPostUpdateListener()
-    .subscribe((postData: {posts: Post[], postCount: number}) => {
-      this.isLoading = false;
-      this.totalPosts = postData.postCount;
-      this.posts = postData.posts;
-    });
+      .subscribe((postData: { posts: Post[], postCount: number }) => {
+        this.isLoading = false;
+        this.totalPosts = postData.postCount;
+        this.posts = postData.posts;
+      });
+    this.userIsAuthenticated = this.authService.getIsAuth();
+    this.authListenerSubs = this.authService
+      .getAuthStatusListener()
+      .subscribe(isAuthenticated => {
+        this.userIsAuthenticated = isAuthenticated;
+        this.userId = this.authService.getUserId();
+      });
+
   }
 
   onChangedPage(pageData: PageEvent) {
@@ -47,6 +60,8 @@ export class PostListComponent implements OnInit, OnDestroy {
     this.isLoading = true;
     this.postsService.deletePost(postId).subscribe(() => {
       this.postsService.getPosts(this.postsPerPage, this.currentPage);
+    }, () => {
+      this.isLoading = false;
     });
   }
 }
